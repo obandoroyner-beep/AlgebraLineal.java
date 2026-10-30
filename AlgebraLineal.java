@@ -281,9 +281,53 @@ public class AlgebraLineal {
         System.out.println(")");
     }
 
-    // Opcion 2: Gram-Schmidt para tres vectores.
+    static Fraccion productoPuntoConPasos(
+        String nombre, Fraccion[] a, Fraccion[] b
+    ) {
+        System.out.print(nombre + " = ");
+        Fraccion suma = new Fraccion(0);
+
+        for (int i = 0; i < a.length; i++) {
+            if (i > 0) {
+                System.out.print(" + ");
+            }
+
+            System.out.print("(" + a[i] + ") * (" + b[i] + ")");
+            suma = suma.sumar(a[i].multiplicar(b[i]));
+        }
+
+        System.out.println(" = " + suma);
+        return suma;
+    }
+
+    static Fraccion[] proyeccionConPasos(
+        String nombre,
+        Fraccion coeficiente,
+        String nombreBase,
+        Fraccion[] base
+    ) {
+        System.out.println(
+            nombre + " = (" + coeficiente + ") * " + nombreBase
+        );
+
+        Fraccion[] proyeccion = new Fraccion[base.length];
+
+        for (int i = 0; i < base.length; i++) {
+            proyeccion[i] = coeficiente.multiplicar(base[i]);
+
+            System.out.println(
+                "Componente " + (i + 1) + ": (" + coeficiente
+                + ") * (" + base[i] + ") = " + proyeccion[i]
+            );
+        }
+
+        mostrarVector(nombre, proyeccion);
+        return proyeccion;
+    }
+
+    // Opcion 2: Gram-Schmidt con procedimiento y fracciones exactas.
     static void gramSchmidt() {
-        System.out.println("\nMETODO DE GRAM-SCHMIDT");
+        System.out.println("\nMETODO DE GRAM-SCHMIDT PASO A PASO");
 
         int n = pedirEntero("Ingrese la dimension de los vectores: ");
 
@@ -296,99 +340,224 @@ public class AlgebraLineal {
         Fraccion[] v2 = pedirVector(n, 2);
         Fraccion[] v3 = pedirVector(n, 3);
 
+        System.out.println("\nVECTORES INGRESADOS:");
+        mostrarVector("v1", v1);
+        mostrarVector("v2", v2);
+        mostrarVector("v3", v3);
+
+        System.out.println("\nPASO 1: CALCULAR u1");
+        System.out.println("u1 = v1");
+
         Fraccion[] u1 = v1.clone();
-        Fraccion p11 = productoPunto(u1, u1);
+        mostrarVector("u1", u1);
+
+        Fraccion p11 = productoPuntoConPasos("u1 . u1", u1, u1);
 
         if (p11.esCero()) {
-            System.out.println("El primer vector no puede ser cero.");
+            System.out.println(
+                "El primer vector es cero. No se puede dividir entre u1 . u1 = 0."
+            );
+            System.out.println(
+                "Ingrese un primer vector distinto de cero para usar este procedimiento."
+            );
             return;
         }
 
-        Fraccion coef21 = productoPunto(v2, u1).dividir(p11);
+        System.out.println("\nPASO 2: CALCULAR u2");
+        System.out.println(
+            "u2 = v2 - ((v2 . u1) / (u1 . u1)) * u1"
+        );
+
+        Fraccion p21 = productoPuntoConPasos("v2 . u1", v2, u1);
+        Fraccion coef21 = p21.dividir(p11);
+
+        System.out.println(
+            "Coeficiente 21 = (" + p21 + ") / (" + p11 + ") = " + coef21
+        );
+
+        Fraccion[] proy21 = proyeccionConPasos(
+            "proy21", coef21, "u1", u1
+        );
+
+        System.out.println("u2 = v2 - proy21");
+
         Fraccion[] u2 = new Fraccion[n];
 
         for (int i = 0; i < n; i++) {
-            u2[i] = v2[i].restar(coef21.multiplicar(u1[i]));
+            u2[i] = v2[i].restar(proy21[i]);
+
+            System.out.println(
+                "u2[" + (i + 1) + "] = (" + v2[i] + ") - ("
+                + proy21[i] + ") = " + u2[i]
+            );
         }
 
-        Fraccion p22 = productoPunto(u2, u2);
+        mostrarVector("u2", u2);
+
+        Fraccion p22 = productoPuntoConPasos("u2 . u2", u2, u2);
 
         if (p22.esCero()) {
-            System.out.println("Los dos primeros vectores son dependientes.");
+            System.out.println(
+                "Los dos primeros vectores son dependientes: u2 es cero."
+            );
+            System.out.println(
+                "No se puede usar u2 como divisor para calcular u3 con esta formula."
+            );
+            System.out.println(
+                "Elija dos primeros vectores linealmente independientes."
+            );
             return;
         }
 
-        Fraccion coef31 = productoPunto(v3, u1).dividir(p11);
-        Fraccion coef32 = productoPunto(v3, u2).dividir(p22);
+        System.out.println("\nPASO 3: CALCULAR u3");
+        System.out.println(
+            "u3 = v3 - ((v3 . u1) / (u1 . u1)) * u1"
+            + " - ((v3 . u2) / (u2 . u2)) * u2"
+        );
+
+        Fraccion p31 = productoPuntoConPasos("v3 . u1", v3, u1);
+        Fraccion coef31 = p31.dividir(p11);
+
+        System.out.println(
+            "Coeficiente 31 = (" + p31 + ") / (" + p11 + ") = " + coef31
+        );
+
+        Fraccion[] proy31 = proyeccionConPasos(
+            "proy31", coef31, "u1", u1
+        );
+
+        Fraccion p32 = productoPuntoConPasos("v3 . u2", v3, u2);
+        Fraccion coef32 = p32.dividir(p22);
+
+        System.out.println(
+            "Coeficiente 32 = (" + p32 + ") / (" + p22 + ") = " + coef32
+        );
+
+        Fraccion[] proy32 = proyeccionConPasos(
+            "proy32", coef32, "u2", u2
+        );
+
+        System.out.println("u3 = v3 - proy31 - proy32");
+
         Fraccion[] u3 = new Fraccion[n];
 
         for (int i = 0; i < n; i++) {
-            u3[i] = v3[i]
-                .restar(coef31.multiplicar(u1[i]))
-                .restar(coef32.multiplicar(u2[i]));
+            Fraccion parcial = v3[i].restar(proy31[i]);
+            u3[i] = parcial.restar(proy32[i]);
+
+            System.out.println(
+                "u3[" + (i + 1) + "] = (" + v3[i] + ") - ("
+                + proy31[i] + ") - (" + proy32[i] + ")"
+            );
+
+            System.out.println(
+                "       = (" + parcial + ") - (" + proy32[i]
+                + ") = " + u3[i]
+            );
         }
 
-        System.out.println("\nRESULTADOS:");
+        mostrarVector("u3", u3);
+
+        System.out.println("\nRESULTADOS FINALES (SIN NORMALIZAR):");
         mostrarVector("u1", u1);
         mostrarVector("u2", u2);
         mostrarVector("u3", u3);
 
-        Fraccion p12 = productoPunto(u1, u2);
-        Fraccion p13 = productoPunto(u1, u3);
-        Fraccion p23 = productoPunto(u2, u3);
+        System.out.println("\nPASO 4: COMPROBAR ORTOGONALIDAD");
 
-        System.out.println("\nCOMPROBACION:");
-        System.out.println("u1 . u2 = " + p12);
-        System.out.println("u1 . u3 = " + p13);
-        System.out.println("u2 . u3 = " + p23);
+        Fraccion p12 = productoPuntoConPasos("u1 . u2", u1, u2);
+        Fraccion p13 = productoPuntoConPasos("u1 . u3", u1, u3);
+        Fraccion p23 = productoPuntoConPasos("u2 . u3", u2, u3);
 
         if (productoPunto(u3, u3).esCero()) {
             System.out.println(
-                "El tercer vector es dependiente de los anteriores."
+                "El tercer vector es dependiente de los anteriores: u3 = 0."
+            );
+            System.out.println(
+                "Aunque los productos punto dan cero, solo se obtuvieron"
+                + " dos vectores no nulos ortogonales."
             );
         } else if (p12.esCero() && p13.esCero() && p23.esCero()) {
-            System.out.println("Los tres vectores son ortogonales.");
+            System.out.println(
+                "COMPROBACION CORRECTA: los tres productos punto son cero."
+            );
+            System.out.println(
+                "Se obtuvieron tres vectores no nulos, ortogonales"
+                + " y linealmente independientes."
+            );
         } else {
-            System.out.println("La comprobacion no se cumple.");
+            System.out.println(
+                "La comprobacion de ortogonalidad no se cumple."
+            );
         }
     }
 
-    // Opcion 3: los cuatro ejercicios de transformaciones.
+    // Opcion 3: transformacion ingresada por el usuario.
     static void transformaciones() {
-        int[][][] matrices = {
-            {{1, 2}, {2, -1}, {1, 3}},
-            {{2, -1}, {1, 3}, {4, -1}},
-            {{3, 1}, {1, -2}, {2, 4}},
-            {{1, -3}, {2, 2}, {5, -1}}
-        };
+        System.out.println("\nTRANSFORMACIONES LINEALES PASO A PASO");
+        int columnas;
+        do {
+            columnas = pedirEntero("Cantidad de columnas (2 a 5): ");
+            if (columnas < 2 || columnas > 5) {
+                System.out.println("Ingrese una cantidad entre 2 y 5.");
+            }
+        } while (columnas < 2 || columnas > 5);
 
-        String[] formulas = {
-            "T(x,y) = (x + 2y, 2x - y, x + 3y)",
-            "T(x,y) = (2x - y, x + 3y, 4x - y)",
-            "T(x,y) = (3x + y, x - 2y, 2x + 4y)",
-            "T(x,y) = (x - 3y, 2x + 2y, 5x - y)"
-        };
-
-        for (int p = 0; p < matrices.length; p++) {
-            int[][] m = matrices[p];
-
-            System.out.println("\nPROBLEMA " + (p + 1));
-            System.out.println(formulas[p]);
-            System.out.println(
-                "T(1,0) = (" + m[0][0] + ", " + m[1][0]
-                + ", " + m[2][0] + ")"
-            );
-            System.out.println(
-                "T(0,1) = (" + m[0][1] + ", " + m[1][1]
-                + ", " + m[2][1] + ")"
-            );
-
-            System.out.println("Matriz resultante:");
-
-            for (int[] fila : m) {
-                System.out.println("[ " + fila[0] + "  " + fila[1] + " ]");
+        String[] variables = {"x", "y", "z", "w", "v"};
+        Fraccion[][] matriz = new Fraccion[3][columnas];
+        System.out.println("Ingrese enteros, negativos, decimales o fracciones.");
+        for (int i = 0; i < 3; i++) {
+            System.out.println("\nComponente " + (i + 1) + " de T:");
+            for (int j = 0; j < columnas; j++) {
+                matriz[i][j] = pedirNumero("Coeficiente de " + variables[j] + ": ");
             }
         }
+        String argumentos = "";
+        for (int j = 0; j < columnas; j++) {
+            if (j > 0) argumentos += ", ";
+            argumentos += variables[j];
+        }
+        System.out.println("\nTRANSFORMACION INGRESADA:");
+        System.out.print("T(" + argumentos + ") = (");
+        for (int i = 0; i < 3; i++) {
+            if (i > 0) System.out.print(", ");
+            for (int j = 0; j < columnas; j++) {
+                if (j > 0) System.out.print(" + ");
+                System.out.print("(" + matriz[i][j] + ")" + variables[j]);
+            }
+        }
+        System.out.println(")");
+
+        String[] bases = new String[columnas];
+        for (int columna = 0; columna < columnas; columna++) {
+            String base = "(";
+            for (int j = 0; j < columnas; j++) {
+                if (j > 0) base += ",";
+                base += (j == columna ? "1" : "0");
+            }
+            base += ")";
+            bases[columna] = base;
+            System.out.println("\nPASO " + (columna + 1) + ": CALCULAR T" + base);
+            Fraccion[] imagen = new Fraccion[3];
+            for (int i = 0; i < 3; i++) {
+                Fraccion suma = new Fraccion(0);
+                String operacion = "";
+                for (int j = 0; j < columnas; j++) {
+                    int valor = (j == columna ? 1 : 0);
+                    suma = suma.sumar(matriz[i][j].multiplicar(new Fraccion(valor)));
+                    if (j > 0) operacion += " + ";
+                    operacion += "(" + matriz[i][j] + ")(" + valor + ")";
+                }
+                imagen[i] = suma;
+                System.out.println("Componente " + (i + 1) + ": " + operacion + " = " + suma);
+            }
+            mostrarVector("T" + base, imagen);
+        }
+        System.out.println("\nPASO " + (columnas + 1) + ": CONSTRUIR LA MATRIZ");
+        for (int j = 0; j < columnas; j++) {
+            System.out.println("Columna " + (j + 1) + ": T" + bases[j]);
+        }
+        mostrarMatriz("Matriz de la transformacion:", matriz);
     }
 
     public static void main(String[] args) {
